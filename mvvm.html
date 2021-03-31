@@ -1,0 +1,87 @@
+
+<html>
+<body>
+
+    $name：$age
+
+    <button @click='plus'>age plus 10 every click</button>
+</body>
+    
+<script>
+
+var mvvm = function(config){
+
+    var self = this;
+    
+    self.data = {};
+    
+    //数据读写
+    for (const key in config.data) {
+        self.data[key] = config.data[key];
+
+        Object.defineProperty(config.data,key,{
+            // enumerable:true,
+            // writable:true,
+            set(v){
+                self.data[key] = this.value = v;
+                self.updateDom();
+            },
+            get(){
+                return self.data[key];
+            }
+        })
+    }
+
+    //绑定事件
+    self.bindEvent = function(){
+        for (const node of document.body.childNodes) {
+            if(node instanceof Element && node.nodeName.toUpperCase() !== 'SCRIPT'){
+                if(node.attributes.length  == 0)continue;
+                
+                for (const attr of node.attributes) {
+                    var eventName = attr.name;
+                    var eventFucName =  attr.value;
+
+                    if(eventName.substr(0,1) != '@'){
+                        continue;
+                    }
+                    eventName = eventName.replace('@','');
+
+                    //node.removeEventListener(eventName); 不需要清除，因为会自动清除重复的event
+                    node.addEventListener(eventName,config.methods[eventFucName]);
+                }
+            }
+        }
+    }
+
+    //更新试图
+    var templateBody = document.body.innerHTML;
+    self.updateDom = function(){
+        var str = templateBody;
+        for (const key in self.data) {
+            str = str.replace('$'+key,self.data[key]);
+        }
+        document.body.innerHTML = str;
+        self.bindEvent();
+    }
+
+    self.updateDom();
+    return this;
+};
+
+var config = {
+    data:{
+        name:'zs',
+        age:55,
+    },
+    methods:{
+        plus(){
+            config.data.age += 10;
+        }
+    },
+};
+new mvvm(config);
+
+
+</script>
+</html>
